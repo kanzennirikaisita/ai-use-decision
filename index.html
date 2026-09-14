@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>生成AI 利用判断ナビ</title>
+<style>
+:root{
+  --bg:#f5f8ff;
+  --surface:#ffffff;
+  --surface-2:#eef5ff;
+  --text:#14213d;
+  --muted:#667085;
+  --line:#dfe7f3;
+  --primary:#2563eb;
+  --primary-2:#60a5fa;
+  --good:#0f9f6e;
+  --good-bg:#eafaf4;
+  --warn:#d97706;
+  --warn-bg:#fff7e6;
+  --bad:#dc2626;
+  --bad-bg:#fff0f0;
+  --info:#7c3aed;
+  --info-bg:#f5efff;
+  --shadow:0 18px 60px rgba(36,74,138,.12);
+  --radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  background:
+    radial-gradient(circle at 12% 4%, rgba(96,165,250,.18), transparent 26%),
+    radial-gradient(circle at 90% 12%, rgba(167,139,250,.15), transparent 25%),
+    var(--bg);
+  color:var(--text);
+}
+button,input{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.shell{max-width:1040px;margin:auto;padding:28px 18px 70px}
+.hero{
+  display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:center;
+  padding:34px;border-radius:32px;background:rgba(255,255,255,.82);
+  border:1px solid rgba(255,255,255,.8);backdrop-filter:blur(16px);box-shadow:var(--shadow);
+}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+  background:#edf4ff;color:#2457b9;font-weight:800;font-size:13px;letter-spacing:.02em;
+}
+.hero h1{font-size:clamp(30px,5vw,54px);line-height:1.08;margin:16px 0 14px;letter-spacing:-.03em}
+.hero p{margin:0;color:var(--muted);line-height:1.85;font-size:16px}
+.hero-art{
+  min-height:230px;border-radius:28px;background:linear-gradient(135deg,#ddebff,#f7f3ff);
+  position:relative;overflow:hidden;display:grid;place-items:center;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(2px)}
+.o1{width:150px;height:150px;background:rgba(37,99,235,.14);top:10px;right:20px}
+.o2{width:110px;height:110px;background:rgba(139,92,246,.14);bottom:8px;left:26px}
+.hero-card{
+  width:78%;padding:18px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.9);
+  border-radius:22px;box-shadow:0 12px 34px rgba(76,104,150,.16);position:relative;z-index:2;
+}
+.hero-card strong{display:block;font-size:18px;margin-bottom:9px}
+.hero-card span{display:block;color:var(--muted);font-size:13px;line-height:1.6}
+.checkline{display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:700;color:#2857a4;font-size:14px}
+.nav-cards{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0 26px;
+}
+.nav-card{
+  border:none;background:var(--surface);border-radius:20px;padding:18px;text-align:left;
+  box-shadow:0 8px 28px rgba(53,84,135,.08);border:1px solid var(--line);
+}
+.nav-card:hover{transform:translateY(-2px);transition:.18s ease;box-shadow:0 12px 32px rgba(53,84,135,.12)}
+.nav-card b{display:block;margin-bottom:6px}
+.nav-card small{color:var(--muted);line-height:1.5}
+.app{
+  background:var(--surface);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.app-head{padding:22px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:center}
+.app-title b{font-size:20px}.app-title span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.progress-wrap{min-width:220px}
+.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:7px}
+.progress{height:9px;background:#edf2f7;border-radius:999px;overflow:hidden}
+.progress > div{height:100%;width:0;background:linear-gradient(90deg,var(--primary),#8b5cf6);transition:.25s ease}
+.stage{padding:30px 24px 26px}
+.kicker{font-size:13px;color:var(--primary);font-weight:900;margin-bottom:8px}
+.question{font-size:clamp(23px,3vw,32px);line-height:1.35;margin:0 0 10px}
+.help{color:var(--muted);line-height:1.75;margin:0 0 22px}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.option{
+  width:100%;border:1px solid var(--line);background:white;border-radius:20px;padding:18px;text-align:left;
+  min-height:104px;display:flex;gap:13px;align-items:flex-start;
+}
+.option:hover{border-color:#9dbbf7;background:#f8fbff}
+.option.selected{border:2px solid var(--primary);background:#eff6ff}
+.icon{
+  width:40px;height:40px;border-radius:14px;background:var(--surface-2);
+  display:grid;place-items:center;flex:none;font-size:20px;
+}
+.option b{display:block;margin:1px 0 5px;font-size:16px}
+.option span{display:block;color:var(--muted);font-size:13px;line-height:1.55}
+.actions{display:flex;justify-content:space-between;gap:12px;margin-top:25px}
+.btn{
+  border:none;border-radius:14px;padding:13px 18px;font-weight:850;
+}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.primary:disabled{opacity:.42;cursor:not-allowed}
+.btn.ghost{background:#f1f5f9;color:#344054}
+.btn.link{background:transparent;color:var(--primary);padding-left:0}
+.notice{
+  margin-top:16px;border-radius:16px;background:#f8fafc;border:1px solid var(--line);padding:13px 15px;
+  color:var(--muted);font-size:13px;line-height:1.6;
+}
+.result{display:none;padding:30px 24px}
+.result.show{display:block}
+.result-banner{border-radius:24px;padding:24px;border:1px solid transparent}
+.result-banner.good{background:var(--good-bg);border-color:#b9ecd9}
+.result-banner.warn{background:var(--warn-bg);border-color:#f3d2a0}
+.result-banner.bad{background:var(--bad-bg);border-color:#f0b6b6}
+.result-banner.ask{background:var(--info-bg);border-color:#d9c6ff}
+.result-mark{font-size:40px}
+.result-banner h2{margin:8px 0 8px;font-size:30px}
+.result-banner p{margin:0;line-height:1.75}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.panel{border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff}
+.panel h3{margin:0 0 10px;font-size:16px}
+.panel ul{margin:0;padding-left:1.2em;color:#475467;line-height:1.8}
+.mini-tag{display:inline-flex;border-radius:999px;padding:6px 10px;background:#f2f4f7;color:#475467;font-size:12px;font-weight:800;margin:3px 4px 3px 0}
+.explain{margin-top:26px;background:#fbfcff;border:1px solid var(--line);border-radius:22px;padding:20px}
+.explain h3{margin:0 0 10px}
+.explain p{color:var(--muted);line-height:1.75;margin:0}
+.sections{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.section-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 8px 30px rgba(53,84,135,.06)}
+.section-card h2{font-size:19px;margin:0 0 12px}
+.section-card p{color:var(--muted);line-height:1.75;font-size:14px;margin:0}
+.levels{display:grid;gap:9px;margin-top:14px}
+.level{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:15px;background:#f8fafc}
+.dot{width:11px;height:11px;border-radius:50%;margin-top:5px;flex:none}
+.level b{font-size:14px}.level small{display:block;color:var(--muted);margin-top:2px;line-height:1.5}
+.footer{margin-top:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+details{margin-top:14px}
+summary{cursor:pointer;color:#355aa6;font-weight:800}
+.details-box{margin-top:8px;padding:13px;border-radius:14px;background:#f8fafc;color:var(--muted);font-size:13px;line-height:1.7}
+@media(max-width:760px){
+  .hero{grid-template-columns:1fr;padding:24px}.hero-art{min-height:180px}
+  .nav-cards{grid-template-columns:1fr}
+  .options{grid-template-columns:1fr}
+  .app-head{align-items:flex-start;flex-direction:column}.progress-wrap{width:100%;min-width:0}
+  .summary-grid,.sections{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <section class="hero">
+    <div>
+      <span class="badge">✨ 迷わないための生成AIガイド</span>
+      <h1>その情報、<br>生成AIに入れて大丈夫？</h1>
+      <p>むずかしい制度や専門用語を覚えなくても大丈夫です。<br>いくつかの質問に答えるだけで、利用判断の目安を確認できます。</p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="orb o1"></div><div class="orb o2"></div>
+      <div class="hero-card">
+        <strong>判断のポイントは4つだけ</strong>
+        <span>① どんな情報か　② 承認済みサービスか<br>③ 海外で処理・保存されるか　④ 学習・保存条件</span>
+        <div class="checkline">✓ 結果は「利用可 / 条件付き / 要確認 / 入力しない」</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nav-cards">
+    <button class="nav-card" onclick="document.getElementById('judge').scrollIntoView()">
+      <b>🧭 いま判断する</b><small>質問に答えて、その場で利用可否の目安を確認</small>
+    </button>
+    <button class="nav-card" onclick="document.getElementById('levels').scrollIntoView()">
+      <b>🗂 情報レベルを見る</b><small>何を「公開情報」「内部情報」と考えるかを確認</small>
+    </button>
+    <button class="nav-card" onclick="document.getElementById('why').scrollIntoView()">
+      <b>🌏 海外利用の考え方</b><small>海外だから一律NGにしない理由をやさしく説明</small>
+    </button>
+  </div>
+
+  <section class="app" id="judge">
+    <div class="app-head">
+      <div class="app-title">
+        <b>生成AI 利用判断ナビ</b>
+        <span>1〜2分で確認できます</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>確認の進み具合</span><span id="progressText">0 / 5</span></div>
+        <div class="progress"><div id="progressBar"></div></div>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="kicker" id="kicker">STEP 1</div>
+      <h2 class="question" id="question"></h2>
+      <p class="help" id="help"></p>
+      <div class="options" id="options"></div>
+      <div class="notice" id="notice"></div>
+      <div class="actions">
+        <button class="btn ghost" id="backBtn" onclick="backStep()">戻る</button>
+        <button class="btn primary" id="nextBtn" onclick="nextStep()" disabled>次へ</button>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <div id="resultBanner" class="result-banner">
+        <div class="result-mark" id="resultMark"></div>
+        <h2 id="resultTitle"></h2>
+        <p id="resultLead"></p>
+      </div>
+      <div class="summary-grid">
+        <div class="panel">
+          <h3>今回の判断理由</h3>
+          <ul id="reasonList"></ul>
+        </div>
+        <div class="panel">
+          <h3>次にすること</h3>
+          <ul id="actionList"></ul>
+        </div>
+      </div>
+      <div class="explain">
+        <h3>覚えておくと便利</h3>
+        <p id="rememberText"></p>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" onclick="restart()">最初からやり直す</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sections">
+    <section class="section-card" id="levels">
+      <h2>🗂 情報レベルの目安</h2>
+      <p>迷ったときは「この情報を庁外の人に見られて困るか」で考えると判断しやすくなります。</p>
+      <div class="levels">
+        <div class="level"><span class="dot" style="background:#22c55e"></span><div><b>Lv.1 公開情報</b><small>ホームページ、条例、公開済み広報資料など</small></div></div>
+        <div class="level"><span class="dot" style="background:#3b82f6"></span><div><b>Lv.2 一般内部情報</b><small>庁内通知案、一般的な会議メモ、個人を特定しない業務文書など</small></div></div>
+        <div class="level"><span class="dot" style="background:#f59e0b"></span><div><b>Lv.3 要注意情報</b><small>個人情報、未公表施策、人事・契約・法人情報など</small></div></div>
+        <div class="level"><span class="dot" style="background:#ef4444"></span><div><b>Lv.4 高機密情報</b><small>特定個人情報、認証情報、秘密鍵、大量の住民情報など</small></div></div>
+      </div>
+    </section>
+
+    <section class="section-card" id="why">
+      <h2>🌏 「海外だから即NG」ではありません</h2>
+      <p>重要なのは、AIモデルの名前や国籍だけではありません。実際に<strong>どこで処理されるか、どこに保存されるか、誰がアクセスできるか、学習に使われるか</strong>を見ます。</p>
+      <details>
+        <summary>もう少し詳しく</summary>
+        <div class="details-box">
+          国内リージョンでも海外事業者の管理者がアクセスできる場合があります。逆に海外リージョンでも、入力データを学習に使わず、保存期間やアクセス管理が明確で、公開情報だけを扱うならリスクは低くできます。<br><br>
+          そのため、このナビは「国内／海外」だけで○×を決めず、「情報の種類」と「サービス条件」を組み合わせて判断します。
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <div class="footer">
+    このナビは利用判断を支援するためのものです。最終判断は所属自治体の情報セキュリティポリシー、個人情報保護ルール、生成AI利用基準に従ってください。<br>
+    ※ 実運用時は、庁内で承認済みのサービス一覧・問い合わせ先・禁止情報を自治体ルールに合わせて差し替えてください。
+  </div>
+</div>
+
+<script>
+const steps = [
+  {
+    q:"入力したい情報は、すでに一般公開されていますか？",
+    help:"ホームページ、公開済みの広報紙、条例、公開資料などを想定しています。",
+    notice:"公開情報だけなら、海外リージョンかどうかにかかわらず、比較的利用しやすい領域です。",
+    options:[
+      {id:"public", icon:"🌿", title:"はい、公開済みです", desc:"誰でも見ることができる情報です"},
+      {id:"notpublic", icon:"🔒", title:"いいえ、公開していません", desc:"庁内だけの情報や、個人・法人に関する情報を含みます"}
+    ]
+  },
+  {
+    q:"その情報に、個人・法人・庁内の重要情報は含まれますか？",
+    help:"氏名を消していても、内容から人物や案件が分かる場合は「含まれる」と考えてください。",
+    notice:"分からない場合は、より慎重な選択肢を選ぶのがおすすめです。",
+    options:[
+      {id:"general", icon:"📝", title:"含まれない", desc:"一般的な文章、アイデア、個人を特定しない情報など"},
+      {id:"internal", icon:"🏢", title:"一般的な庁内情報", desc:"庁内通知案、一般会議メモなど"},
+      {id:"personal", icon:"👤", title:"個人情報・未公表情報など", desc:"住民相談、氏名、未公表施策、人事・契約情報など"},
+      {id:"secret", icon:"⛔", title:"高機密情報", desc:"特定個人情報、ID・パスワード、秘密鍵、大量の住民情報など"}
+    ],
+    skipIf:()=>answers[0]==="public"
+  },
+  {
+    q:"利用する生成AIは、庁内で利用を認められたサービスですか？",
+    help:"「使ってよい生成AI一覧」や庁内掲示、情シスからの案内を確認してください。",
+    notice:"個人契約や無料サービスは、保存・学習条件が庁内契約と異なることがあります。",
+    options:[
+      {id:"approved", icon:"✅", title:"承認済みです", desc:"庁内で利用条件が確認されています"},
+      {id:"unknown", icon:"❓", title:"分かりません", desc:"承認済みか確認できません"},
+      {id:"unapproved", icon:"🚧", title:"承認されていません", desc:"個人契約・未審査のサービスなど"}
+    ]
+  },
+  {
+    q:"データが海外で処理・保存される可能性を把握していますか？",
+    help:"モデル自体ではなく、入力データの処理場所・保存場所を見ます。",
+    notice:"「国内リージョン」という表示だけで判断せず、保存・管理者アクセス・再委託も確認できると安心です。",
+    options:[
+      {id:"domestic", icon:"🇯🇵", title:"国内のみと確認済み", desc:"処理・保存条件が明確です"},
+      {id:"foreignKnown", icon:"🌏", title:"海外を含むが条件確認済み", desc:"処理国・保存国などを把握しています"},
+      {id:"locationUnknown", icon:"🌫️", title:"分かりません", desc:"処理場所や保存場所を確認できていません"}
+    ]
+  },
+  {
+    q:"入力内容の「学習利用」と「保存条件」は確認できていますか？",
+    help:"入力した文章がAIの学習に使われないか、保存期間や削除条件が明確かを確認します。",
+    notice:"非公開情報を扱う場合、ここが不明なサービスは避けるのが基本です。",
+    options:[
+      {id:"safeTerms", icon:"🛡️", title:"確認済みで問題なし", desc:"学習利用なし、保存条件も明確です"},
+      {id:"limited", icon:"⚙️", title:"一部保存されるが条件は明確", desc:"保存期間・用途・削除条件を把握しています"},
+      {id:"termsUnknown", icon:"❔", title:"分かりません", desc:"学習や保存条件を確認できていません"},
+      {id:"training", icon:"📚", title:"学習に利用される可能性がある", desc:"入力内容がモデル改善等に使われる可能性があります"}
+    ]
+  }
+];
+
+let answers = {};
+let current = 0;
+let visibleSteps = [];
+
+function rebuildVisible(){
+  visibleSteps = steps.map((s,i)=>i).filter(i => !(steps[i].skipIf && steps[i].skipIf()));
+  if(!visibleSteps.includes(current)) current = visibleSteps[0];
+}
+
+function render(){
+  rebuildVisible();
+  document.getElementById("stage").style.display="block";
+  document.getElementById("result").classList.remove("show");
+  const s = steps[current];
+  const pos = visibleSteps.indexOf(current);
+  document.getElementById("kicker").textContent=`STEP ${pos+1}`;
+  document.getElementById("question").textContent=s.q;
+  document.getElementById("help").textContent=s.help;
+  document.getElementById("notice").textContent=s.notice;
+  const opt = document.getElementById("options");
+  opt.innerHTML="";
+  s.options.forEach(o=>{
+    const b=document.createElement("button");
+    b.className="option"+(answers[current]===o.id?" selected":"");
+    b.innerHTML=`<div class="icon">${o.icon}</div><div><b>${o.title}</b><span>${o.desc}</span></div>`;
+    b.onclick=()=>{answers[current]=o.id; render();};
+    opt.appendChild(b);
+  });
+  document.getElementById("nextBtn").disabled=!answers[current];
+  document.getElementById("backBtn").style.visibility=pos===0?"hidden":"visible";
+  document.getElementById("progressText").textContent=`${pos} / ${visibleSteps.length}`;
+  document.getElementById("progressBar").style.width=`${(pos/visibleSteps.length)*100}%`;
+}
+
+function nextStep(){
+  rebuildVisible();
+  const pos=visibleSteps.indexOf(current);
+  if(pos < visibleSteps.length-1){
+    current=visibleSteps[pos+1];
+    render();
+  } else {
+    showResult();
+  }
+}
+function backStep(){
+  rebuildVisible();
+  const pos=visibleSteps.indexOf(current);
+  if(pos>0){ current=visibleSteps[pos-1]; render(); }
+}
+function restart(){
+  answers={}; current=0; render(); document.getElementById("judge").scrollIntoView();
+}
+
+function showResult(){
+  let kind="good", mark="◎", title="利用しやすい内容です";
+  let lead="今回の条件では、生成AIを利用できる可能性が高いと考えられます。";
+  let reasons=[], actions=[], remember="海外リージョンかどうかだけでなく、入力情報の種類とサービス条件を組み合わせて判断します。";
+
+  const isPublic = answers[0]==="public";
+  const info = answers[1] || "public";
+  const service = answers[2];
+  const loc = answers[3];
+  const terms = answers[4];
+
+  if(info==="secret"){
+    kind="bad"; mark="×"; title="この情報は入力しないでください";
+    lead="高機密情報は、通常の生成AIサービスには入力しない扱いが安全です。";
+    reasons=["特定個人情報・認証情報などは漏えい時の影響が非常に大きい","海外・国内を問わず慎重な取扱いが必要"];
+    actions=["入力を中止する","必要な場合は専用環境や担当部署へ相談する"];
+  } else if(service==="unapproved"){
+    kind="ask"; mark="？"; title="まず利用サービスを確認してください";
+    lead="未審査の生成AIでは、非公開情報を入力しないでください。";
+    reasons=["保存・学習・海外処理などの条件が庁内で確認されていない"];
+    actions=["承認済みサービスを利用する","利用したいサービスがある場合は情シスへ確認する"];
+  } else if(info==="personal" && (loc==="locationUnknown" || terms==="termsUnknown" || terms==="training")){
+    kind="bad"; mark="×"; title="この条件では入力しないでください";
+    lead="個人情報・未公表情報を扱うには、サービス条件の確認が不足しています。";
+    reasons=["情報の重要度が高い","処理・保存場所または学習条件が不明・不適切"];
+    actions=["入力を中止する","必要なら承認済み環境・国内環境・個別審査を利用する"];
+  } else if(service==="unknown" || loc==="locationUnknown" || terms==="termsUnknown"){
+    if(isPublic){
+      kind="warn"; mark="△"; title="公開情報に限れば利用しやすいです";
+      lead="ただし、非公開情報を入力する前にサービス条件を確認してください。";
+      reasons=["入力内容は公開情報","一方でサービス条件に不明点がある"];
+      actions=["公開情報だけを扱う","非公開情報を扱う場合は承認状況・保存・学習条件を確認する"];
+    } else {
+      kind="ask"; mark="？"; title="一度確認してから使いましょう";
+      lead="非公開情報を扱うには、確認できていない条件があります。";
+      reasons=["入力情報が非公開","サービスの承認状況・海外処理・学習条件のいずれかが不明"];
+      actions=["庁内の利用可能サービス一覧を確認する","分からなければ情シスへ相談する"];
+    }
+  } else if(info==="personal"){
+    kind="ask"; mark="△"; title="個別ルールを確認してください";
+    lead="条件は確認されていますが、個人情報・未公表情報は通常より慎重な判断が必要です。";
+    reasons=["サービス条件は確認済み","ただし入力情報の重要度が高い"];
+    actions=["庁内の個人情報・生成AI利用ルールを確認する","必要なら個別審査を受ける","匿名化・要約化で情報量を減らせないか検討する"];
+  } else if(info==="internal" && loc==="foreignKnown"){
+    kind="warn"; mark="○"; title="条件付きで利用できる可能性があります";
+    lead="海外で処理・保存されても、条件確認済みで一般内部情報までなら許容できる設計が可能です。";
+    reasons=["入力情報は一般内部情報","海外利用条件が確認済み","学習・保存条件も把握済み"];
+    actions=["庁内で定めた入力可能レベルを守る","個人情報や高機密情報は入力しない"];
+  } else {
+    reasons=[
+      isPublic?"入力内容が公開情報":"入力情報の機密度が低い",
+      service==="approved"?"承認済みサービスを利用":"サービス条件を確認",
+      loc==="foreignKnown"?"海外利用条件を把握済み":(loc==="domestic"?"国内処理・保存を確認済み":""),
+      terms==="safeTerms"?"学習利用なし・保存条件明確":"保存条件を把握済み"
+    ].filter(Boolean);
+    actions=["庁内ルールの範囲内で利用する","出力内容は必ず人が確認する","新しい種類の情報を入力するときは再度判断する"];
+  }
+
+  const banner=document.getElementById("resultBanner");
+  banner.className=`result-banner ${kind}`;
+  document.getElementById("resultMark").textContent=mark;
+  document.getElementById("resultTitle").textContent=title;
+  document.getElementById("resultLead").textContent=lead;
+  document.getElementById("reasonList").innerHTML=reasons.map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("actionList").innerHTML=actions.map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("rememberText").textContent=remember;
+  document.getElementById("progressText").textContent=`${visibleSteps.length} / ${visibleSteps.length}`;
+  document.getElementById("progressBar").style.width="100%";
+  document.getElementById("stage").style.display="none";
+  document.getElementById("result").classList.add("show");
+}
+
+render();
+</script>
+</body>
+</html>
